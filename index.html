@@ -73,7 +73,7 @@ button:focus-visible{outline:3px solid var(--teal);outline-offset:3px}
   background:repeating-conic-gradient(rgba(255,203,82,.07) 0deg 6deg,transparent 6deg 15deg);animation:spin 40s linear infinite;-webkit-mask:radial-gradient(circle,#000 10%,transparent 55%);mask:radial-gradient(circle,#000 10%,transparent 55%)}
 .tag{font:700 clamp(13px,1vw,21px)/1 var(--body);letter-spacing:.2em;text-transform:uppercase;color:var(--teal);text-shadow:0 0 12px rgba(62,224,200,.6)}
 .pic{display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:clamp(8px,1.4vw,30px)}
-.em{font-family:var(--emoji);font-size:clamp(64px,min(10vw,19vh),220px);line-height:1.1;filter:drop-shadow(0 14px 22px rgba(0,0,0,.55));
+.em{font-family:var(--emoji);font-size:calc(clamp(64px,min(10vw,19vh),220px) * var(--sc,1));line-height:1.1;filter:drop-shadow(0 14px 22px rgba(0,0,0,.55));
   animation:emIn .7s cubic-bezier(.2,1.6,.4,1) both,float 3.4s ease-in-out infinite;animation-delay:calc(var(--i)*180ms),calc(var(--i)*180ms + .7s)}
 .op{font:900 clamp(40px,min(5vw,9vh),110px)/1 var(--display);color:var(--gold);text-shadow:0 0 22px rgba(255,203,82,.8);animation:emIn .6s cubic-bezier(.2,1.6,.4,1) both;animation-delay:calc(var(--i)*180ms)}
 @keyframes emIn{from{transform:scale(0) rotate(-25deg);opacity:0}to{transform:none;opacity:1}}
@@ -86,6 +86,12 @@ button:focus-visible{outline:3px solid var(--teal);outline-offset:3px}
 .t.hint{color:#062a24;background:linear-gradient(180deg,#8ff3e2,var(--teal));border-color:#b8fff2;box-shadow:0 0 18px -2px rgba(62,224,200,.8);animation:flip .5s ease-out}
 .t.show{color:var(--gold-ink);background:linear-gradient(180deg,#ffe9a8,var(--gold) 50%,var(--gold-2));border-color:#fff3c4;box-shadow:0 0 20px -2px rgba(255,203,82,.85);animation:flip .5s ease-out}
 @keyframes flip{0%{transform:rotateX(90deg) scale(.8)}100%{transform:none}}
+.meaning{max-width:min(1300px,94%);text-align:center;font:700 clamp(20px,min(2vw,3.6vh),42px)/1.3 var(--body);color:#bffcf1;padding:.45em 1.1em;border-radius:18px;
+  background:rgba(62,224,200,.1);border:1px solid rgba(62,224,200,.4);box-shadow:0 0 30px -10px rgba(62,224,200,.7);animation:dropIn .5s ease-out both;text-wrap:balance}
+.vcol{display:inline-flex;flex-direction:column;align-items:center;gap:0}
+.vcol .op{font-size:clamp(30px,min(3.4vw,6vh),80px)}
+.em.crop{display:inline-block;position:relative;overflow:hidden;line-height:1;vertical-align:middle}
+.em.crop .ci{position:absolute;display:block;line-height:1;white-space:nowrap}
 .answer{min-height:1.3em;font:900 clamp(26px,min(3vw,5vh),62px)/1.15 var(--display);text-align:center;letter-spacing:-.01em;text-wrap:balance;
   background:linear-gradient(90deg,var(--gold),#fff3c4,var(--gold-2),var(--gold));background-size:300% 100%;-webkit-background-clip:text;background-clip:text;color:transparent;
   animation:sheen 4s linear infinite,dropIn .5s ease-out both;filter:drop-shadow(0 0 18px rgba(255,203,82,.5))}
@@ -191,6 +197,7 @@ body.urgent .vignette{animation:vig 1s ease-in-out infinite}
   <main class="stage" id="stage">
     <div class="tag" id="tag">Thành ngữ · tục ngữ</div>
     <div class="pic" id="pic" aria-live="polite"></div>
+    <div class="meaning" id="meaning" hidden></div>
     <div class="tiles" id="tiles"></div>
     <div class="answer" id="answer" hidden></div>
   </main>
@@ -199,7 +206,6 @@ body.urgent .vignette{animation:vig 1s ease-in-out infinite}
     <button class="btn teal" id="bhint" type="button">💡 Gợi ý chữ</button>
     <button class="btn main" id="breveal" type="button">Mở đáp án</button>
     <button class="btn" id="bnext" type="button" hidden>Câu tiếp →</button>
-    <button class="btn violet" id="bkey" type="button">🔑 Mở từ khóa</button>
   </div>
 </div>
 
@@ -208,8 +214,7 @@ body.urgent .vignette{animation:vig 1s ease-in-out infinite}
     <div class="rays" aria-hidden="true"></div>
     <div class="logo" aria-hidden="true"><span style="--i:0">🖼️</span><span style="--i:1">🤔</span><span style="--i:2">💡</span><span style="--i:3">🔤</span></div>
     <h1 class="title" id="mt">Đuổi hình<br>bắt chữ</h1>
-    <div class="sub">10 câu · Tìm từ khóa bí mật</div>
-    <div class="opts">
+    <div class="opts" hidden>
       <div class="row"><span class="rlab">Thời gian mỗi câu</span>
         <div class="seg" id="seg" role="radiogroup" aria-label="Thời gian mỗi câu">
           <button type="button" role="radio" data-t="20" aria-checked="false">20 giây</button>
@@ -336,16 +341,16 @@ const FX=(()=>{
 
 const KW = "CƠ CẤU XÃ HỘI";
 const Q = [
-  {e:["🐘","+","🐭"], a:"Đầu voi đuôi chuột", key:[3,0]},
-  {e:["🍚","😋","+","🧥","🔥"], a:"Cơm no áo ấm", key:[0,1]},
-  {e:["🏇","👀","🌸"], a:"Cưỡi ngựa xem hoa", key:[0,0]},
-  {e:["😢","+","🐊"], a:"Nước mắt cá sấu", key:[3,1]},
-  {e:["🎸","👂","🐃"], a:"Đàn gảy tai trâu", key:[3,3]},
-  {e:["⬆️","🐘","⬇️","🐕"], a:"Lên voi xuống chó", key:[2,0]},
-  {e:["🐎","➡️","🏆"], a:"Mã đáo thành công", key:[0,1]},
-  {e:["🔦","🏃","🚗"], a:"Cầm đèn chạy trước ô tô", key:[2,1]},
-  {e:["☝️","☀️","✌️","🌫️"], a:"Một nắng hai sương", key:[0,1]},
-  {e:["🧑‍🏭","🤝","🧑‍🌾","🤝","🧑‍🔬"], a:"Liên minh công nông trí thức", d:"Liên minh công – nông – trí thức", key:[0,1], tag:"Câu cuối · Gần với bài học"}
+  {e:[["🐟",1.4],"😋",["🐟",.55]], a:"Cá lớn nuốt cá bé", m:"Kẻ mạnh chèn ép, lấn át kẻ yếu", key:[0,0]},
+  {e:["🥚","🧠",">","🦆"], a:"Trứng mà đòi khôn hơn vịt", m:"Người nhỏ tuổi, ít hiểu biết lại muốn tỏ ra giỏi hơn người lớn", key:[4,1]},
+  {e:["🏇","👀","💐"], a:"Cưỡi ngựa xem hoa", m:"Xem lướt qua, làm việc qua loa không kỹ", key:[0,0]},
+  {e:["😭","+","🐊"], a:"Nước mắt cá sấu", m:"Khóc giả vờ, thương xót giả tạo", key:[3,1]},
+  {e:[{v:[["💦",.6],"↓",{c:"🦆",x:.06,y:0,w:.54,h:.42,sc:1.6}]}], a:"Nước đổ đầu vịt", m:"Nói mãi mà người nghe chẳng tiếp thu được gì", key:[2,2]},
+  {e:["↑","🐘","↓","🐕"], a:"Lên voi xuống chó", m:"Lúc sang lúc hèn, thăng trầm thất thường", key:[2,0]},
+  {e:["📖","📖","📖","♾️"], a:"Học học nữa học mãi", m:"Lời khuyên phải học tập không ngừng", d:"Học, học nữa, học mãi", key:[4,1], tag:"Câu nói quen thuộc"},
+  {e:["😋","🥄","🥣","+","🦶","🥣"], a:"Ăn cháo đá bát", m:"Vô ơn, quay lưng với người đã giúp mình", key:[1,1]},
+  {e:[{c:"🐘",x:.03,y:0,w:.56,h:.8,sc:1.25},"+",{c:"🐀",x:.5,y:.3,w:.5,h:.64,sc:1.25}], a:"Đầu voi đuôi chuột", m:"Mở đầu thì hoành tráng, kết thúc chẳng ra gì", key:[3,3]},
+  {e:["🐱","👍","🐈","📏"], a:"Mèo khen mèo dài đuôi", m:"Tự khen mình, tự đề cao bản thân", key:[3,2]}
 ];
 const $ = id => document.getElementById(id);
 let gen=0; const later=(fn,ms)=>{ const g=gen; setTimeout(()=>{ if(g===gen) fn(); },ms); };
@@ -355,14 +360,16 @@ const CIRC=263.9;
 function letters(){ const out=[]; Q[idx].a.toUpperCase().split(" ").forEach((w,wi)=>[...w].forEach((ch,ci)=>out.push({w:wi,c:ci,ch}))); return out; }
 
 const got=new Set();
+Q.forEach((q,i)=>q.slot=i);
+function shuffleQ(){ const head=Q.slice(0); for(let i=head.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [head[i],head[j]]=[head[j],head[i]]; } Q.splice(0,head.length,...head); }
 const KWL=[...KW.replace(/ /g,"")];
 function buildDots(){ const d=$("kwslots"); d.innerHTML=""; let k=0;
   KW.split(" ").forEach(w=>{ const g=document.createElement("div"); g.className="kwg";
-    [...w].forEach(ch=>{ const s=document.createElement("div"); s.className="ks"+(got.has(k)?" on":"")+(k===idx&&!got.has(k)?" cur":""); s.id="ks"+k; s.textContent=got.has(k)?ch:""; g.append(s); k++; });
+    [...w].forEach(ch=>{ const s=document.createElement("div"); s.className="ks"+(got.has(k)?" on":"")+(k===Q[idx].slot&&!got.has(k)?" cur":""); s.id="ks"+k; s.textContent=got.has(k)?ch:""; g.append(s); k++; });
     d.append(g); }); }
 function keyIndex(){ const q=Q[idx]; let k=0; const W=q.a.toUpperCase().split(" "); for(let w=0;w<q.key[0];w++) k+=[...W[w]].length; return k+q.key[1]; }
 function flyKey(){
-  const i=idx, from=$("t"+keyIndex()), to=$("ks"+i); if(!from||!to||got.has(i)) { got.add(i); buildDots(); return; }
+  const i=Q[idx].slot, from=$("t"+keyIndex()), to=$("ks"+i); if(!from||!to||got.has(i)) { got.add(i); buildDots(); return; }
   const a=from.getBoundingClientRect(), b=to.getBoundingClientRect();
   const f=document.createElement("div"); f.className="ks on fly"; f.textContent=KWL[i];
   f.style.cssText=`left:${a.left}px;top:${a.top}px;width:${a.width}px;height:${a.height}px;font-size:${a.width*.6}px`;
@@ -376,7 +383,13 @@ function render(){
   gen++; const q=Q[idx];
   $("qn").textContent=idx+1; $("qt").textContent=Q.length; buildDots();
   const pic=$("pic"); pic.innerHTML="";
-  q.e.forEach((x,i)=>{ const s=document.createElement("span"); s.className = x==="+" ? "op" : "em"; s.textContent=x; s.style.setProperty("--i",i); pic.append(s); });
+  const mk=(it,i)=>{
+    if(it && it.v){ const col=document.createElement("span"); col.className="vcol"; it.v.forEach(ch=>col.append(mk(ch,i))); return col; }
+    if(it && it.c){ const s=document.createElement("span"); s.className="em crop"; s.style.setProperty("--i",i); s.style.setProperty("--sc",it.sc||1);
+      s.style.width=(it.w*1.247)+"em"; s.style.height=(it.h*1.2)+"em";
+      const inn=document.createElement("span"); inn.className="ci"; inn.textContent=it.c; inn.style.left=(-it.x*1.247)+"em"; inn.style.top=(-it.y*1.2)+"em"; s.append(inn); return s; }
+    const x=Array.isArray(it)?it[0]:it, sc=Array.isArray(it)?it[1]:1; const s=document.createElement("span"); s.className = ["+",">","↑","↓"].includes(x) ? "op" : "em"; s.textContent=x; s.style.setProperty("--i",i); s.style.setProperty("--sc",sc); return s; };
+  q.e.forEach((it,i)=>pic.append(mk(it,i)));
   pic.setAttribute("aria-label","Câu đố số "+(idx+1));
   const t=$("tiles"); t.innerHTML="";
   let k=0;
@@ -384,7 +397,7 @@ function render(){
     [...w].forEach(ch=>{ const c=document.createElement("div"); c.className="t"; c.id="t"+k; c.dataset.ch=ch; c.textContent=ch; g.append(c); k++; });
     t.append(g); });
   $("t"+keyIndex()).classList.add("key"); $("tag").textContent=q.tag||"Thành ngữ · tục ngữ"; $("tag").classList.toggle("special",!!q.tag);
-  shown.clear(); hintStep=0; revealed=false;
+  shown.clear(); hintStep=0; revealed=false; $("meaning").hidden=true; $("meaning").textContent="💡 "+(q.m||"");
   $("answer").hidden=true; $("bnext").hidden=true; $("breveal").hidden=false; $("bhint").hidden=false;
   $("breveal").classList.remove("go"); $("bnext").classList.remove("go");
 }
@@ -392,7 +405,8 @@ function render(){
 function hint(){
   if(revealed) return;
   const L=letters(); let pick=[];
-  if(hintStep===0){ L.forEach((x,i)=>{ if(x.c===0 && !shown.has(i)) pick.push(i); }); }
+  if(hintStep===0 && Q[idx].m){ hintStep++; $("meaning").hidden=false; Snd.chime(); return; }
+  if(hintStep===1){ L.forEach((x,i)=>{ if(x.c===0 && !shown.has(i)) pick.push(i); }); }
   if(!pick.length){ const rest=L.map((_,i)=>i).filter(i=>!shown.has(i)); if(rest.length<=1){ reveal(); return; } pick=[rest[Math.floor(Math.random()*rest.length)]]; }
   hintStep++;
   pick.forEach((i,n)=>{ shown.add(i); later(()=>$("t"+i).classList.add("hint"),n*90); });
@@ -402,25 +416,26 @@ function hint(){
 function reveal(){
   if(revealed) return; revealed=true; stopTimer();
   const L=letters(); let n=0;
-  L.forEach((_,i)=>{ const el=$("t"+i); if(el.classList.contains("hint")) return; later(()=>{ el.classList.add("show"); Snd.tick(); },(n++)*70); });
+  const STEP=Math.min(70,1000/L.length);
+  L.forEach((_,i)=>{ const el=$("t"+i); if(el.classList.contains("hint")) return; later(()=>{ el.classList.add("show"); Snd.tick(); },(n++)*STEP); });
   later(()=>{
     $("answer").textContent=Q[idx].d||Q[idx].a; $("answer").hidden=false;
     Snd.correct(1);
     const r=$("tiles").getBoundingClientRect(); FX.burst(r.left+r.width/2,r.top+r.height/2,70,13); FX.burst(r.left+r.width*.2,r.top,30,9); FX.burst(r.left+r.width*.8,r.top,30,9);
-  }, n*70+120);
-  later(flyKey, n*70+400);
+  }, n*STEP+120);
+  later(flyKey, n*STEP+400);
   $("breveal").hidden=true; $("bhint").hidden=true; $("bnext").hidden=false; $("bnext").classList.add("go","main");
   $("bnext").textContent = idx===Q.length-1 ? "Kết thúc 🎉" : "Câu tiếp →";
   document.body.classList.remove("urgent");
 }
 
 function next(){
-  if(revealed) got.add(idx);
+  if(revealed) got.add(Q[idx].slot);
   if(idx<Q.length-1){ idx++; render(); resetTimer(); startTimer(); }
   else finish();
 }
 function finish(){
-  gen++; stopTimer(); Snd.pause(); Q.forEach((_,i)=>got.add(i)); buildDots();
+  gen++; stopTimer(); Snd.pause(); Q.forEach(q=>got.add(q.slot)); buildDots();
   const fk=$("finkw"); fk.innerHTML=""; let k=0;
   KW.split(" ").forEach(w=>{ const g=document.createElement("div"); g.className="kwg";
     [...w].forEach(ch=>{ const t=document.createElement("div"); t.className="fk"; t.textContent=ch; t.style.setProperty("--i",k++); g.append(t); }); fk.append(g); });
@@ -446,7 +461,7 @@ function syncSound(){ const m=Snd.musicOn,f=Snd.sfxOn;
 function openMenu(){ stopTimer(); Snd.pause();
   $("mStart").textContent = started ? "Tiếp tục" : "Bắt đầu"; $("mRestart").hidden=!started;
   $("end").hidden=true; $("menu").hidden=false; }
-function restart(){ got.clear(); idx=0; render(); resetTimer(); }
+function restart(){ got.clear(); shuffleQ(); idx=0; render(); resetTimer(); }
 function launch(){ Snd.ensure(); if(document.activeElement) document.activeElement.blur(); $("menu").hidden=true; $("end").hidden=true;
   if(!started){ started=true; restart(); }
   if(revealed) Snd.play(); else startTimer(); }
@@ -464,7 +479,7 @@ $("bmenu").onclick=openMenu;
 $("bhint").onclick=hint;
 $("breveal").onclick=reveal;
 $("bnext").onclick=next;
-$("bkey").onclick=finish;
+
 $("eAgain").onclick=()=>{ document.activeElement.blur(); $("end").hidden=true; restart(); Snd.ensure(); startTimer(); };
 $("eMenu").onclick=()=>{ started=false; restart(); openMenu(); };
 
@@ -474,7 +489,6 @@ document.addEventListener("keydown",e=>{
   if(e.target.closest&&e.target.closest("button")&&(e.key===" "||e.key==="Enter")) return;
   if(e.key===" "||e.key==="Enter"||e.key==="ArrowRight"){ e.preventDefault(); revealed?next():reveal(); }
   else if(e.key==="h"||e.key==="H"){ hint(); }
-  else if(e.key==="k"||e.key==="K"){ finish(); }
   else if(e.key==="Escape"){ openMenu(); }
 });
 
